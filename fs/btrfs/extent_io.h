@@ -435,7 +435,7 @@ int clear_page_blks_state(struct page *page, unsigned long blk_states,
 int test_page_blks_state(struct page *page, enum blk_state blk_state,
 			u64 start, u64 end, int check_all);
 struct extent_buffer *alloc_extent_buffer(struct btrfs_fs_info *fs_info,
-					  u64 start);
+					u64 start, unsigned long len);
 struct extent_buffer *__alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
 						  u64 start, unsigned long len);
 struct extent_buffer *alloc_dummy_extent_buffer(struct btrfs_fs_info *fs_info,
@@ -559,5 +559,5 @@ noinline u64 find_lock_delalloc_range(struct inode *inode,
 				      u64 *end, u64 max_bytes);
 #endif
 struct extent_buffer *alloc_test_extent_buffer(struct btrfs_fs_info *fs_info,
-					       u64 start, u32 nodesize);
+					      u64 start, u32 nodesize);
 #endif

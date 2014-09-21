@@ -375,11 +375,12 @@ static int test_eb_bitmaps(u32 sectorsize, u32 nodesize)
 
 	test_msg("Running extent buffer bitmap tests\n");
 
+
 	/*
 	 * In ppc64, sectorsize can be 64K, thus 4 * 64K will be larger than
 	 * BTRFS_MAX_METADATA_BLOCKSIZE.
 	 */
-	len = (sectorsize < BTRFS_MAX_METADATA_BLOCKSIZE)
+	len = ((sectorsize * 4) <= BTRFS_MAX_METADATA_BLOCKSIZE)
 		? sectorsize * 4 : sectorsize;
 
 	bitmap = kmalloc(len, GFP_KERNEL);
@@ -401,7 +402,7 @@ static int test_eb_bitmaps(u32 sectorsize, u32 nodesize)
 
 	/* Do it over again with an extent buffer which isn't page-aligned. */
 	free_extent_buffer(eb);
-	eb = __alloc_dummy_extent_buffer(NULL, nodesize / 2, len);
+	eb = __alloc_dummy_extent_buffer(NULL, PAGE_SIZE / 2, len);
 	if (!eb) {
 		test_msg("Couldn't allocate test extent buffer\n");
 		kfree(bitmap);

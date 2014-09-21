@@ -138,19 +138,19 @@ static void btrfs_free_dummy_fs_info(struct btrfs_fs_info *fs_info)
 
 	spin_lock(&fs_info->buffer_lock);
 	radix_tree_for_each_slot(slot, &fs_info->buffer_radix, &iter, 0) {
-		struct extent_buffer *eb;
+		struct extent_buffer_head *ebh;
 
-		eb = radix_tree_deref_slot_protected(slot, &fs_info->buffer_lock);
-		if (!eb)
+		ebh = radix_tree_deref_slot_protected(slot, &fs_info->buffer_lock);
+		if (!ebh)
 			continue;
 		/* Shouldn't happen but that kind of thinking creates CVE's */
-		if (radix_tree_exception(eb)) {
-			if (radix_tree_deref_retry(eb))
+		if (radix_tree_exception(ebh)) {
+			if (radix_tree_deref_retry(ebh))
 				slot = radix_tree_iter_retry(&iter);
 			continue;
 		}
 		spin_unlock(&fs_info->buffer_lock);
-		free_extent_buffer_stale(eb);
+		free_extent_buffer_stale(&ebh->eb);
 		spin_lock(&fs_info->buffer_lock);
 	}
 	spin_unlock(&fs_info->buffer_lock);

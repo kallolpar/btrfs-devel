@@ -2324,11 +2324,16 @@ static int btrfs_run_sanity_tests(void)
 	int ret, i;
 	u32 sectorsize, nodesize;
 	u32 test_sectorsize[] = {
-		PAGE_SIZE,
+		4096,
+		8192,
+		16384,
+		32768,
+		65536,
 	};
 	ret = btrfs_init_test_fs();
 	if (ret)
 		return ret;
+
 	for (i = 0; i < ARRAY_SIZE(test_sectorsize); i++) {
 		sectorsize = test_sectorsize[i];
 		for (nodesize = sectorsize;

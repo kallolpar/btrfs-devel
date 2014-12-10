@@ -291,9 +291,11 @@ static int btrfs_ioctl_setflags(struct file *file, void __user *arg)
 		} else {
 			ip->flags |= BTRFS_INODE_NODATACOW;
 		}
-	} else {
+	} else if (!IS_SWAPFILE(inode)) {
 		/*
-		 * Revert back under same assuptions as above
+		 * Revert back under same assumptions as above. swap_activate
+		 * checks that we don't swapon a copy-on-write file, but we also
+		 * make sure that it doesn't become copy-on-write here.
 		 */
 		if (S_ISREG(mode)) {
 			if (inode->i_size == 0)
@@ -316,7 +318,12 @@ static int btrfs_ioctl_setflags(struct file *file, void __user *arg)
 		ret = btrfs_set_prop(inode, "btrfs.compression", NULL, 0, 0);
 		if (ret && ret != -ENODATA)
 			goto out_drop;
-	} else if (flags & FS_COMPR_FL) {
+	} else if (flags & FS_COMPR_FL && !IS_SWAPFILE(inode)) {
+		/*
+		 * Like nodatacow, swap_activate checks that we don't swapon a
+		 * compressed file, so we shouldn't let it become compressed.
+		 */
+
 		const char *comp;
 
 		ip->flags |= BTRFS_INODE_COMPRESS;
@@ -644,6 +651,12 @@ static int create_snapshot(struct btrfs_root *root, struct inode *dir,
 
 	if (!test_bit(BTRFS_ROOT_REF_COWS, &root->state))
 		return -EINVAL;
+
+	if (atomic_read(&root->nr_swapfiles)) {
+		btrfs_err(root->fs_info,
+			  "cannot create snapshot with active swapfile");
+		return -ETXTBSY;
+	}
 
 	atomic_inc(&root->will_be_snapshoted);
 	smp_mb__after_atomic();
@@ -1277,6 +1290,12 @@ int btrfs_defrag_file(struct inode *inode, struct file *file,
 		if (range->compress_type)
 			compress_type = range->compress_type;
 	}
+
+	mutex_lock(&inode->i_mutex);
+	ret = IS_SWAPFILE(inode) ? -ETXTBSY : 0;
+	mutex_unlock(&inode->i_mutex);
+	if (ret)
+		return ret;
 
 	if (extent_thresh == 0)
 		extent_thresh = 256 * 1024;
@@ -2913,6 +2932,11 @@ static int btrfs_extent_same(struct inode *src, u64 loff, u64 len,
 
 	btrfs_double_lock(src, loff, dst, dst_loff, len);
 
+	if (IS_SWAPFILE(src) || IS_SWAPFILE(dst)) {
+		ret = -ETXTBSY;
+		goto out_unlock;
+	}
+
 	ret = extent_same_check_offsets(src, loff, len);
 	if (ret)
 		goto out_unlock;
@@ -3629,6 +3653,10 @@ static noinline long btrfs_ioctl_clone(struct file *file, unsigned long srcfd,
 	} else {
 		mutex_lock(&src->i_mutex);
 	}
+
+	ret = -ETXTBSY;
+	if (IS_SWAPFILE(src) || IS_SWAPFILE(inode))
+		goto out_unlock;
 
 	/* determine range to clone */
 	ret = -EINVAL;

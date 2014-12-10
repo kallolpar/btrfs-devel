@@ -4103,6 +4103,7 @@ int try_release_extent_mapping(struct extent_map_tree *map,
 				break;
 			}
 			if (test_bit(EXTENT_FLAG_PINNED, &em->flags) ||
+			    test_bit(EXTENT_FLAG_SWAPFILE, &em->flags) ||
 			    em->start != start) {
 				write_unlock(&map->lock);
 				free_extent_map(em);

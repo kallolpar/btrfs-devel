@@ -6291,6 +6291,7 @@ again:
 		else
 			goto out;
 	}
+	WARN_ON_ONCE(IS_SWAPFILE(inode));
 	em = alloc_extent_map();
 	if (!em) {
 		err = -ENOMEM;

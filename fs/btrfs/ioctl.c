@@ -322,6 +322,11 @@ static int btrfs_ioctl_setflags(struct file *file, void __user *arg)
 	} else if (flags & FS_COMPR_FL) {
 		const char *comp;
 
+		if (root->sectorsize < PAGE_SIZE) {
+			ret = -EINVAL;
+			goto out_drop;
+		}
+
 		ip->flags |= BTRFS_INODE_COMPRESS;
 		ip->flags &= ~BTRFS_INODE_NOCOMPRESS;
 
@@ -1342,7 +1347,8 @@ int btrfs_defrag_file(struct inode *inode, struct file *file,
 		return -EINVAL;
 
 	if (range->flags & BTRFS_DEFRAG_RANGE_COMPRESS) {
-		if (range->compress_type > BTRFS_COMPRESS_TYPES)
+		if ((range->compress_type > BTRFS_COMPRESS_TYPES)
+			|| (root->sectorsize < PAGE_SIZE))
 			return -EINVAL;
 		if (range->compress_type)
 			compress_type = range->compress_type;

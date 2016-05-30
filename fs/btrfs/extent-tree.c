@@ -5012,6 +5012,8 @@ again:
 		spin_lock(&space_info->lock);
 	}
 
+	ASSERT(!current->journal_info || flush != BTRFS_RESERVE_FLUSH_ALL);
+
 	ret = -ENOSPC;
 	used = space_info->bytes_used + space_info->bytes_reserved +
 		space_info->bytes_pinned + space_info->bytes_readonly +

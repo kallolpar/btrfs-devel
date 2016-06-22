@@ -1198,7 +1198,7 @@ int btrfs_create_free_space_tree(struct btrfs_fs_info *fs_info)
 abort:
 	fs_info->creating_free_space_tree = 0;
 	btrfs_abort_transaction(trans, ret);
-	btrfs_end_transaction(trans, tree_root);
+	btrfs_end_transaction(trans);
 	return ret;
 }
 
@@ -1285,7 +1285,7 @@ int btrfs_clear_free_space_tree(struct btrfs_fs_info *fs_info)
 
 abort:
 	btrfs_abort_transaction(trans, ret);
-	btrfs_end_transaction(trans, tree_root);
+	btrfs_end_transaction(trans);
 	return ret;
 }
 

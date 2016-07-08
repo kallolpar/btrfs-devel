@@ -101,7 +101,7 @@ struct btrfs_fs_info *btrfs_alloc_dummy_fs_info(u32 nodesize, u32 sectorsize)
 	}
 
 	fs_info->super_copy->nodesize = nodesize;
-	fs_info->super_copy->nodesize = sectorsize;
+	fs_info->super_copy->sectorsize = sectorsize;
 
 	if (init_srcu_struct(&fs_info->subvol_srcu)) {
 		kfree(fs_info->fs_devices);
